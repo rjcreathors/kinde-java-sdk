@@ -2,10 +2,13 @@ package com.kinde.token;
 
 import com.nimbusds.jwt.SignedJWT;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class BaseToken implements KindeToken {
 
     private String token;
@@ -16,7 +19,12 @@ public class BaseToken implements KindeToken {
     protected BaseToken(String token, boolean valid) {
         this.token = token;
         this.valid = valid;
-        signedJWT = SignedJWT.parse(this.token);
+        try {
+            signedJWT = SignedJWT.parse(this.token);
+        } catch (ParseException e) {
+            log.error("There was an error while parsing the JWT", e);
+            signedJWT = null;
+        }
     }
 
     @Override

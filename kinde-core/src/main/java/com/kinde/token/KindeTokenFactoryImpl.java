@@ -18,6 +18,7 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.ParseException;
 import java.util.List;
 
 @Slf4j
@@ -35,8 +36,14 @@ public class KindeTokenFactoryImpl implements KindeTokenFactory {
 
     @SneakyThrows
     public KindeToken parse(String token) {
-        SignedJWT signedJWT = SignedJWT.parse(token);
-
+        final SignedJWT signedJWT;
+        try {
+            signedJWT = SignedJWT.parse(token);
+        } catch (ParseException e) {
+            // TODO: Better way of determining refresh/opaque token.
+            log.error("Error occurred while trying to parse the token.", e);
+            return RefreshToken.init(token, true);
+        }
         JWKSelector jwkSelector = new JWKSelector(new JWKMatcher.Builder().keyID(signedJWT.getHeader().getKeyID()).build());
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(this.kindeJwkStore.publicKeys());
         List<JWK> jwks = jwkSource.get(jwkSelector, null);
